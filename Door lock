@@ -1,0 +1,143 @@
+#ifndef F_CPU
+	#define F_CPU 16000000UL
+#endif
+
+
+#include <avr/io.h>
+#include <util/delay.h>
+#include <stdlib.h>
+#include <avr/eeprom.h>
+#include "LCD.h"
+
+uint8_t k = 3;
+uint8_t isfalse = 1;
+
+
+#define RETRY_USER_ADDR 0x00
+
+uint8_t read_EEPROM(uint16_t addr){
+EECR = (1<<EERE);
+EEAR = addr;
+return EEDR;
+}
+
+void write_EEPROM(uint16_t addr, uint8_t data){
+EECR = (1<<EEMWE);
+EEAR = addr;
+EEDR = data;
+}
+
+
+static unsigned char GetKeyPressed(){
+	unsigned char x,c;
+
+	PORTA |= 0xf0; // Pull Up for read data
+
+	for(x=0;x<3;x++){
+		DDRA &= ~(0xfe); // All pin set as input
+		DDRA |= (0x08>>x); // Select Column
+
+		for(c=0;c<4;c++){
+			if(!(PINA & (0x80>>c))){
+				return (c*3+x); // Get assorted number button array
+			}
+		}
+	}
+	
+	return 0xff;
+}
+
+int main(){
+
+	LCD4_init();
+	LCD4_clear();
+
+	unsigned char data, pos = 6;
+	const unsigned char ch[12] = {
+		'*', '0', '#',
+		'7', '8', '9',
+		'4', '5', '6',
+		'1', '2', '3'
+	};
+	const char* pwd = "3241";
+	char pass[5];
+	const char* status = "Password";
+
+	LCD4_move((16-strlen(status))/2,0);
+	LCD4_writes(status);
+	LCD4_move(5,1);
+	LCD4_writes("[____]");
+
+	/*DDRB = (1<<DDB0);
+	PORTB0 = (1<<PORTB0);*/
+
+	uint8_t retry = k;
+
+  	eeprom_update_byte(RETRY_USER_ADDR, retry);
+
+  	retry = eeprom_read_byte(RETRY_USER_ADDR);
+
+	while(1){
+		data = GetKeyPressed();
+		
+		LCD4_move(pos,1);
+		if(data != 0xff && data != 0 && data != 2){
+			LCD4_write('*');
+			
+			if((pos-6) > 3){
+				LCD4_clear();
+				memset(pass,0,strlen(pass));
+				status = "overflow";
+			}
+			
+			pass[pos-6] = ch[data];
+			pos++;
+			
+			_delay_ms(150);
+		}
+
+		LCD4_move((16-strlen(status))/2,0);
+		LCD4_writes(status);
+		if(data == 0){
+			status = "true";
+			for(int x=0;x<4;x++){
+				if(pass[x] != pwd[x]){
+					status = "false";
+          			isfalse = 0;
+					break;
+				}
+			}
+      
+      	if (!isfalse){
+			if(k == 0){
+          		status = "Out of Retry";
+          		break;
+			}
+			else if(k == 1){
+				PORTD = (0<<PORTD7);
+				PORTD = (1<<PORTD7);
+				_delay_ms(900);
+				PORTD = (0<<PORTD7);
+			}
+			else if(k == 2){
+				PORTD = (0<<PORTD7);
+				PORTD = (1<<PORTD7);
+				_delay_ms(600);
+				PORTD = (0<<PORTD7);
+			}
+			else if (k == 3){
+				PORTD = (0<<PORTD7);
+				PORTD = (1<<PORTD7);
+				_delay_ms(300);
+				PORTD = (0<<PORTD7);
+			}
+			
+          	status = ("Retry");
+        	k--;
+
+		LCD4_clear();
+		}
+		}
+	}
+}
+
