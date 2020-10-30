@@ -45,12 +45,12 @@ static void init_gpio(void);
 int main(){
 	init_gpio();
 
-  	if (check_memory_data() == MEMORY_IS_EMPTY && (PINB & (1<<1)==1 ))
+  	if (check_memory_data() == MEMORY_IS_EMPTY && (PINB & (1<<1)) == 1)
     	eeprom_update_byte(RETRY_USER_ADDR, 3);
 
   	uint8_t total_retry = eeprom_read_byte(RETRY_USER_ADDR);
   	uint8_t is_false = 0;
-	char ch_retry[10];
+	char ch_retry[3];
 
 	LCD4_init();
 	LCD4_clear();
@@ -64,15 +64,20 @@ int main(){
 	};
 	const char* pwd = "3241";
 	char pass[5];
-	const char* status = "Password []";
+	const char* status = "Password";
 
 	itoa(total_retry, ch_retry, 10); // 10 nya itu konversi ke bilangan desimal
-	strcpy(status,(const char*)"[" );
-	strcpy(status,(const char*)ch_retry );
-	strcpy(status,(const char*)"]" );
 
-	LCD4_move((16-strlen(status))/2,0);
+	LCD4_move(0,0);
 	LCD4_writes(status);
+
+	LCD4_move(13,0);
+	LCD4_write((unsigned char)'[');
+	LCD4_move(14,0);
+	LCD4_writes((char*)ch_retry);
+	LCD4_move(15,0);
+	LCD4_write((unsigned char)']');
+
 	LCD4_move(5,1);
 	LCD4_writes("[____]");
 	
@@ -102,23 +107,23 @@ int main(){
 			status = "true";
 			for(int x=0;x<4;x++){
 				if(pass[x] != pwd[x]){
-          				is_false = 1;
-					break;
+          		is_false = 1;
+				break;
 				}
 			}
 
-      			if(is_false){
-        			pb_buzzer(INPUT_WRONG);
-        			if(total_retry > 0)
+      		if(is_false){
+        		pb_buzzer(INPUT_WRONG);
+        		if(total_retry > 0)
 					status = "false";
-        			else
-            				status = "retry habis";  
+        		else
+            		status = "retry habis";  
 
         		total_retry--;
         		eeprom_update_byte(RETRY_USER_ADDR, total_retry);
-      			}
-      			else
-        			pb_buzzer(INPUT_CORRECT);
+      		}
+      		else
+        		pb_buzzer(INPUT_CORRECT);
 				
 		LCD4_clear();
 		}
@@ -144,8 +149,9 @@ static void pb_buzzer(uint8_t state){
       	PORTB ^= (1<<3); //PORTB DI XOR SAMA PORTB BIT 3 
       	_delay_ms(100);
    		 }
-  	}
 		PORTB &= ~(1<<3);
+  	}
+		
   	else
 	{
    		PORTB |= (1<<3); 
@@ -162,5 +168,4 @@ static void init_gpio(void){
   PORTB &= ~(1<<3);
   PORTD &= ~(1<<7); // register port itu buat output, pin buat input
 }
-
 
