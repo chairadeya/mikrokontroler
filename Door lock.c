@@ -81,8 +81,8 @@ int main(){
 
 	while(1){
 		data = GetKeyPressed();
-		
 		LCD4_move(pos,1);
+		
 		if(data != 0xff && data != 0 && data != 2){
 			LCD4_write('*');
 			
@@ -102,30 +102,29 @@ int main(){
 			status = "true";
 			for(int x=0;x<4;x++){
 				if(pass[x] != pwd[x]){
-          		is_false = 1;
-				break;
+          				is_false = 1;
+					break;
 				}
 			}
 
-      	if(is_false){
-        	pb_buzzer(INPUT_WRONG);
-        	if(total_retry > 0)
-				status = "false";
-        	else
-            	status = "retry habis";  
+      			if(is_false){
+        			pb_buzzer(INPUT_WRONG);
+        			if(total_retry > 0)
+					status = "false";
+        			else
+            				status = "retry habis";  
 
-        	total_retry--;
-        	eeprom_update_byte(RETRY_USER_ADDR, total_retry);
-      	}
-
-      	else
-        	pb_buzzer(INPUT_CORRECT);
-	
+        		total_retry--;
+        		eeprom_update_byte(RETRY_USER_ADDR, total_retry);
+      			}
+      			else
+        			pb_buzzer(INPUT_CORRECT);
+				
 		LCD4_clear();
 		}
 	}
 }
-	static void check_memory_data(void)
+	static uint8_t check_memory_data(void)
 	{
     	uint8_t mem_value = eeprom_read_byte(RETRY_USER_ADDR);
    		 uint8_t is_empty = 0; //apakah kosong?
@@ -163,4 +162,5 @@ static void init_gpio(void){
   PORTB &= ~(1<<3);
   PORTD &= ~(1<<7); // register port itu buat output, pin buat input
 }
+
 
