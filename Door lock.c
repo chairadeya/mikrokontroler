@@ -45,7 +45,7 @@ static void init_gpio(void);
 int main(){
 	init_gpio();
 
-  	if (check_memory_data() == MEMORY_IS_EMPTY && (PINB & (1<<1)) == 1)
+  	if (check_memory_data() == MEMORY_IS_EMPTY )
     	eeprom_update_byte(RETRY_USER_ADDR, 3);
 
   	uint8_t total_retry = eeprom_read_byte(RETRY_USER_ADDR);
@@ -68,15 +68,15 @@ int main(){
 
 	itoa(total_retry, ch_retry, 10); // 10 nya itu konversi ke bilangan desimal
 
-	LCD4_move(0,0);
-	LCD4_writes(status);
-
 	LCD4_move(13,0);
 	LCD4_write((unsigned char)'[');
 	LCD4_move(14,0);
 	LCD4_writes((char*)ch_retry);
 	LCD4_move(15,0);
 	LCD4_write((unsigned char)']');
+
+	LCD4_move(1,0);
+	LCD4_writes(status);
 
 	LCD4_move(5,1);
 	LCD4_writes("[____]");
@@ -101,8 +101,9 @@ int main(){
 			_delay_ms(150);
 		}
 
-		LCD4_move((16-strlen(status))/2,0);
+		LCD4_move(1,0);
 		LCD4_writes(status);
+
 		if(data == 0){
 			status = "true";
 			for(int x=0;x<4;x++){
@@ -119,7 +120,7 @@ int main(){
         		else
             		status = "retry habis";  
 
-        		total_retry--;
+        		total_retry -= 1;
         		eeprom_update_byte(RETRY_USER_ADDR, total_retry);
       		}
       		else
@@ -129,18 +130,15 @@ int main(){
 		}
 	}
 }
-	static uint8_t check_memory_data(void)
-	{
-    	uint8_t mem_value = eeprom_read_byte(RETRY_USER_ADDR);
-   		 uint8_t is_empty = 0; //apakah kosong?
+static uint8_t check_memory_data(void)
+{
+    uint8_t mem_value = eeprom_read_byte(RETRY_USER_ADDR);
+   	uint8_t is_empty = 0; //apakah kosong?
 
-    	for(uint8_t check = 1; check<= 3; check++){
-     		if(mem_value == check)
-        		is_empty = 0;
-      		else
-        		is_empty = 1;
-    	}
-    	return is_empty;
+	if (mem_value < 1 && mem_value > 3)
+		is_empty = 1;
+
+    return is_empty;
 	}
 
 static void pb_buzzer(uint8_t state){
