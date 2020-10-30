@@ -45,12 +45,12 @@ static void init_gpio(void);
 int main(){
 	init_gpio();
 
-  	if (check_memory_data() == MEMORY_IS_EMPTY )
+  	if (check_memory_data() == MEMORY_IS_EMPTY && (PINB & (1<<0)) == 0)
     	eeprom_update_byte(RETRY_USER_ADDR, 3);
 
   	uint8_t total_retry = eeprom_read_byte(RETRY_USER_ADDR);
   	uint8_t is_false = 0;
-	char ch_retry[3];
+	char ch_retry[10];
 
 	LCD4_init();
 	LCD4_clear();
@@ -68,6 +68,9 @@ int main(){
 
 	itoa(total_retry, ch_retry, 10); // 10 nya itu konversi ke bilangan desimal
 
+	if(total_retry < 1)
+		status = "Retry habis";
+
 	LCD4_move(13,0);
 	LCD4_write((unsigned char)'[');
 	LCD4_move(14,0);
@@ -81,9 +84,9 @@ int main(){
 	LCD4_move(5,1);
 	LCD4_writes("[____]");
 	
-	if(total_retry < 1)
+	if(total_retry < 1)  
 		return -1;
-
+	
 	while(1){
 		data = GetKeyPressed();
 		LCD4_move(pos,1);
@@ -105,20 +108,17 @@ int main(){
 		LCD4_writes(status);
 
 		if(data == 0){
-			status = "true";
+			status = "benar";
 			for(int x=0;x<4;x++){
 				if(pass[x] != pwd[x]){
-          		is_false = 1;
-				break;
+          			is_false = 1;
+					break;
 				}
 			}
 
       		if(is_false){
         		pb_buzzer(INPUT_WRONG);
-        		if(total_retry > 0)
-					status = "false";
-        		else
-            		status = "retry habis";  
+        		status = "salah"; 
 
         		total_retry -= 1;
         		eeprom_update_byte(RETRY_USER_ADDR, total_retry);
@@ -126,20 +126,20 @@ int main(){
       		else
         		pb_buzzer(INPUT_CORRECT);
 				
-		LCD4_clear();
+			LCD4_clear();
 		}
 	}
 }
-static uint8_t check_memory_data(void)
-{
+
+static uint8_t check_memory_data(void){
     uint8_t mem_value = eeprom_read_byte(RETRY_USER_ADDR);
    	uint8_t is_empty = 0; //apakah kosong?
 
-	if (mem_value < 1 && mem_value > 3)
+	if (mem_value < 1 || mem_value > 3)
 		is_empty = 1;
 
     return is_empty;
-	}
+}
 
 static void pb_buzzer(uint8_t state){
   	if(state){
@@ -148,10 +148,7 @@ static void pb_buzzer(uint8_t state){
       	_delay_ms(100);
    		 }
 		PORTB &= ~(1<<3);
-  	}
-		
-  	else
-	{
+  	}else{
    		PORTB |= (1<<3); 
     	_delay_ms(250);
    		PORTB &= ~(1<<3);
@@ -159,11 +156,11 @@ static void pb_buzzer(uint8_t state){
 }
 
 static void init_gpio(void){
-  DDRB |= (1<<3);
-  DDRD |= (1<<7);
-  DDRB &= ~(1<<1);
+	DDRB |= (1<<3);
+	DDRD |= (1<<7);
+	DDRB &= ~(1<<0);
 
-  PORTB &= ~(1<<3);
-  PORTD &= ~(1<<7); // register port itu buat output, pin buat input
+	PORTB &= ~(1<<3);
+	PORTD &= ~(1<<7); // register port itu buat output, pin buat input
 }
 
