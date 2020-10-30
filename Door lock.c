@@ -9,9 +9,6 @@
 #include <avr/eeprom.h>
 #include "LCD.h"
 
-uint8_t k = 3;
-uint8_t isfalse = 1;
-
 #define RETRY_USER_ADDR 0x00
 #define MEMORY_IS_EMPTY 1 
 #define MEMORY_IS_FILLED 0
@@ -94,10 +91,8 @@ int main(){
 				memset(pass,0,strlen(pass));
 				status = "overflow";
 			}
-			
 			pass[pos-6] = ch[data];
 			pos++;
-			
 			_delay_ms(150);
 		}
 
@@ -128,34 +123,36 @@ int main(){
 	
 		LCD4_clear();
 		}
-
-	static void check_memory_data(void){
-    uint8_t mem_value = eeprom_read_byte(RETRY_USER_ADDR);
-    uint8_t is_empty = 0; //apakah kosong?
-
-    for(uint8_t check = 1; check<= 3; check++){
-      if(mem_value == check)
-        is_empty = 0;
-      else
-        is_empty = 1;
-    }
-    return is_empty;
 	}
 }
+	static void check_memory_data(void)
+	{
+    	uint8_t mem_value = eeprom_read_byte(RETRY_USER_ADDR);
+   		 uint8_t is_empty = 0; //apakah kosong?
+
+    	for(uint8_t check = 1; check<= 3; check++){
+     		if(mem_value == check)
+        		is_empty = 0;
+      		else
+        		is_empty = 1;
+    	}
+    	return is_empty;
+	}
 
 static void pb_buzzer(uint8_t state){
-  if(state){
-    for (uint8_t x=0; x< 5; x++){
-      PORTB ^= (1<<3); //PORTB DI XOR SAMA PORTB BIT 3 
-      _delay_ms(100);
-    }
-  }
-    PORTB &= ~(1<<3);
-  else{
-    PORTB |= (1<<3); 
-    _delay_ms(250);
-    PORTB &= ~(1<<3);
-  }
+  	if(state){
+    	for (uint8_t x=0; x< 5; x++){
+      	PORTB ^= (1<<3); //PORTB DI XOR SAMA PORTB BIT 3 
+      	_delay_ms(100);
+   		 }
+  	}
+		PORTB &= ~(1<<3);
+  	else
+	{
+   		PORTB |= (1<<3); 
+    	_delay_ms(250);
+   		PORTB &= ~(1<<3);
+  	}
 }
 
 static void init_gpio(void){
